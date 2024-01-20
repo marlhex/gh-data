@@ -9,6 +9,7 @@ jobs:
     steps:
       - name: Get code
         uses: actions/checkout@v3
+
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
@@ -16,10 +17,14 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
+
       - name: Install dependencies
+        if: steps.cache-dependencies.outputs.cache-hit != 'true'  # Only run if cache was not hit
         run: npm ci
+
       - name: Lint code
         run: npm run lint
+
       - name: Test code
         run: npm run test
 
@@ -31,6 +36,7 @@ jobs:
     steps:
       - name: Get code
         uses: actions/checkout@v3
+
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
@@ -38,13 +44,18 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
+
       - name: Install dependencies
+        if: steps.cache-dependencies.outputs.cache-hit != 'true'  # Only run if cache was not hit
         run: npm ci
+
       - name: Build website
         run: npm run build
+
       - name: Publish JS filename
         id: build
         run: find dist/assets/*.js -type f -execdir echo 'script-file={}' >> $GITHUB_OUTPUT ';'
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -59,9 +70,12 @@ jobs:
         with:
           name: dist-files
           # path: dist
+
       - name: Output contents
         run: ls -R
+
       - name: Output filename
         run: echo ${{ needs.build.outputs.script-file }}
+
       - name: Deploy
         run: echo "Deploying..."
